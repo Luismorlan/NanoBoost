@@ -31,7 +31,7 @@ This subsection describes the software architecture of NanoBoost, where we divid
 ![Architecture](https://docs.google.com/drawings/d/e/2PACX-1vRurl49ozZYTcWlaQMzBd2kBN8qbBRsgD5-r5edCAZ2DTafS9CTfMUn4Z6z4CgT42lrDFVy1Rpdw1C_/pub?w=960&h=720)
 
 NanoBoost can be devided into 3 layers, from bottom up, they are:
-1. Consensus Layer
+1. ***Consensus Layer***
 
 The natural question is, why do we need this layer? This is the core layer to answer 3 questions:
 * Am I the master to schedule the *task* execution?
@@ -44,7 +44,7 @@ In this layer we implemented consensus functionalities that does **master electi
 
 Besides that, it also manages mastership information, and notify upper layer (though NanoBoost's MastershipChange RPC) whenever a mastership change happens.
 
-2. NanoBoost Layer
+2. ***NanoBoost Layer***
 
 This layer consists of **master** and **agents**.
 ### Master
@@ -57,7 +57,8 @@ We design master as a pipeline, which makes it easier to implement. A master con
 ### Agent
 Agent should be simple. In NanoBoost agent contains one RPC, which is Execute. It Execute master's scheduled task and reply through TaskDone.
 
-3. User Space
+3. ***User Space***
+
 We intended to enable NanoBoost to execute any DAG graph. User space API mainly answers 2 questions:
 * What does the execution graph (NanoGraph) look like?
 * What does each vertex do.
