@@ -38,4 +38,34 @@ The natural question is, why do we need this layer? This is the core layer to an
 * Who are the members of the system?
 * What's the progress of execution.
 
-In this layer we implemented consensus functionalities that does **master election**, **frontier storage** and **membership management**. This layer provides 3 APIs towards upper layer, which are:
+In this layer we implemented consensus functionalities that does **master election**, **frontier storage** and **membership management**. This layer provides 2 APIs towards upper layer, which are:
+* Get/SetFrontier: Master will get frontier when it initialize, or set frontier once frontier is updated.
+* GetMembers: This will return all members in cluster.
+
+Besides that, it also manages mastership information, and notify upper layer (though NanoBoost's MastershipChange RPC) whenever a mastership change happens.
+
+2. NanoBoost Layer
+
+This layer consists of **master** and **agents**.
+### Master
+We design master as a pipeline, which makes it easier to implement. A master contains 4 modules:
+* **Listener**: This module exposes 2 RPCs - *TaskDone* and *MastershipChange*. When TaskDone is invoked, it will forward this information to scheduler and expose more frontier.
+* **Scheduler**: This module trackes what's the remaining tasks and what's the frontier. It maintains in-memory NanoGraph and frontier, and schedule the execution order. Whenever a new frontier is exposed, it will update the frontier in consensus layer by invoking SetFrontier. Note that, we store the entire frontier, thus the frontier we are updating are idempotent so that the frontier stored in Consensus will never gets dirty.
+* **TaskQueue**: This module stores the frontier, it can be implemented as either a queue or a priority queue. It's in-memory and will be consumed by Dispatcher.
+* **Dispatcher**: This module dispatches job to agents in a load-balancing manner. It periodically gets membership information from Consensus layer, and invokes agents' Execute RPC. Note that we don't maintain a session with other agents, instead agents reply to master through TaskDone API in listener.
+
+### Agent
+Agent should be simple. In NanoBoost agent contains one RPC, which is Execute. It Execute master's scheduled task and reply through TaskDone.
+
+3. User Space
+We intended to enable NanoBoost to execute any DAG graph. User space API mainly answers 2 questions:
+* What does the execution graph (NanoGraph) look like?
+* What does each vertex do.
+Thus we have 2 following components:
+### Nano
+Nano is the vertex in the graph, it basically takes some inputs in NAS, executed based on how user defines, and output the executed result(s) back to NAS. 
+
+### NanoGraph
+NanoGraph defines the execution graph. It links Nanos together and defined the input and output of it. For ease of implementation we design it as a static graph, in stage 2 we'll extend it to be dynamically generated. 
+
+Note that, a user has to provide both of the above implementation in order to NanoBoost to run.
